@@ -29,3 +29,7 @@ metadata:
 - 配置远程仓库为用户 fork：https://github.com/Tang200614/learn-claude-code.git
 - 迁移所有 agent 文件（s01~s05, s_full）从 Anthropic SDK 到 OpenAI SDK 格式
 - 提交并推送到 main 分支
+- 为 [agents/s01_agent_loop.py](agents/s01_agent_loop.py) 添加详细中文注释，解释：
+  - 核心架构（LLM→工具执行→结果反馈循环）
+  - 每个函数与关键步骤的作用
+  - 安全过滤、超时控制、输出限制机制

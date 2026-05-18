@@ -9,9 +9,9 @@ metadata:
 
 ## 关键模块记忆
 
-### agents/s01_agent_loop.py
-- 核心功能：基础 Agent Loop 实现
-- 当前状态：已从 Anthropic SDK 切换为 OpenAI SDK 兼容格式
+### agents/s01_agent_loop.py ~ s05_skill_loading.py, s_full.py
+- 核心功能：各阶段 Agent 示例实现
+- 当前状态：已从 Anthropic SDK 统一迁移为 OpenAI SDK 兼容格式
 - 关键依赖：openai, python-dotenv
 
 ## 已知长期风险
@@ -27,4 +27,5 @@ metadata:
 
 ### 2026-05-18
 - 配置远程仓库为用户 fork：https://github.com/Tang200614/learn-claude-code.git
-- 修改 s01_agent_loop.py：从 Anthropic SDK 迁移到 OpenAI SDK 格式
+- 迁移所有 agent 文件（s01~s05, s_full）从 Anthropic SDK 到 OpenAI SDK 格式
+- 提交并推送到 main 分支

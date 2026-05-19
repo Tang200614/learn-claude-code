@@ -95,61 +95,116 @@ def run_bash(command: str) -> str:
 # 3. 历史消息
 messages = []
 
-# 4.主循环
-print("输入 'q' 退出")
-while True:
-    # 读取用户输入
-    user_input = input("\n\033[36ms01 >> \033[0m")
-    if user_input.lower() == "q":
-        break
-    # 加入历史
-    messages.append({"role": "user", "content": user_input})
-    # 第一次调用模型
-    response = client.messages.create(
-        system=SYSTEM,
-        model=MODEL,
-        max_tokens=100,
-        messages=messages,
-        tools=TOOLS
-     )
-
-    # 先把第一次回复加入历史！
-    messages.append({"role": "assistant", "content": response.content})
-
-    # 如果是 tool_use，执行工具
-    if response.stop_reason == "tool_use":
+def agent_loop(messages: list):
+    while True:
+        response = client.messages.create(
+            system=SYSTEM,
+            model=MODEL,
+            max_tokens=100,
+            messages=messages,
+            tools=TOOLS
+        )
+        # 追加回复到历史消息
+        messages.append({"role": "assistant", "content": response.content})
         print(response.content)
-        tool_result_content = []
+        print("messages: ", messages)
+        if response.stop_reason != "tool_use":
+            return
+        # 执行每个工具调用
+        result = []
         for block in response.content:
             if block.type == "tool_use":
-                print(f"\n\033[33m$ {block.input['command']}\033[0m")
+                # 高亮显示要执行的命令（黄色）
+                print(f"\033[33m$ {block.input['command']}\033[0m")
+                # 执行命令
                 output = run_bash(block.input["command"])
-                print(f"📤 输出: {output[:200]}")
-                tool_result_content.append({
+                result.append({
                     "type": "tool_result",
                     "tool_use_id": block.id,
                     "content": output
                 })
+        messages.append({"role": "user", "content": result})
 
-        # 把工具结果作为 user 消息加入历史
-        messages.append({"role": "user", "content": tool_result_content})
-
-        # 再次调用模型
-        print("\n🤔 把结果给 AI，让它继续...")
-        response = client.messages.create(
-            system=SYSTEM,
-            model=MODEL,
-            max_tokens=1000,
-            messages=messages,
-            tools=TOOLS
-        )
-
-        # 把第二次回复也加入历史
-        messages.append({"role": "assistant", "content": response.content})
-
-    # 显示最终文本回复
-    for block in response.content:
-        if block.type == "text":
-            print(f"\nAI: {block.text}")
+if __name__ == "__main__":
+    history = []
+    # 主输入循环
+    while True:
+        try:
+            # 读取用户输入
+            user_input = input("\n\033[36ms01 >> \033[0m")
+        except (EOFError, KeyboardInterrupt):
             break
+        # 退出命令
+        if user_input.strip().lower() in ("q", "exit", ""):
+            break
+        # 加入历史
+        history.append({"role": "user", "content": user_input})
+        agent_loop(history)
+        # 显示最终回复
+        response_content = history[-1]["content"]
+        if isinstance(response_content, list):
+            for block in response_content:
+                if hasattr(block, "text"):
+                    print(block.text)
+        print("----结束----")
+    
+
+
+# # 4.主循环
+# print("输入 'q' 退出")
+# while True:
+#     # 读取用户输入
+#     user_input = input("\n\033[36ms01 >> \033[0m")
+#     if user_input.lower() == "q":
+#         break
+#     # 加入历史
+#     messages.append({"role": "user", "content": user_input})
+#     # 第一次调用模型
+#     response = client.messages.create(
+#         system=SYSTEM,
+#         model=MODEL,
+#         max_tokens=100,
+#         messages=messages,
+#         tools=TOOLS
+#      )
+
+#     # 先把第一次回复加入历史！
+#     messages.append({"role": "assistant", "content": response.content})
+
+#     # 如果是 tool_use，执行工具
+#     if response.stop_reason == "tool_use":
+#         print(response.content)
+#         tool_result_content = []
+#         for block in response.content:
+#             if block.type == "tool_use":
+#                 print(f"\n\033[33m$ {block.input['command']}\033[0m")
+#                 output = run_bash(block.input["command"])
+#                 print(f"📤 输出: {output[:200]}")
+#                 tool_result_content.append({
+#                     "type": "tool_result",
+#                     "tool_use_id": block.id,
+#                     "content": output
+#                 })
+
+#         # 把工具结果作为 user 消息加入历史
+#         messages.append({"role": "user", "content": tool_result_content})
+
+#         # 再次调用模型
+#         print("\n🤔 把结果给 AI，让它继续...")
+#         response = client.messages.create(
+#             system=SYSTEM,
+#             model=MODEL,
+#             max_tokens=1000,
+#             messages=messages,
+#             tools=TOOLS
+#         )
+
+#         # 把第二次回复也加入历史
+#         messages.append({"role": "assistant", "content": response.content})
+
+#     # 显示最终文本回复
+#     for block in response.content:
+#         if block.type == "text":
+#             print(f"\nAI: {block.text}")
+#             break
     
